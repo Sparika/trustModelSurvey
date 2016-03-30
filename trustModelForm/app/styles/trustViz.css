@@ -1,0 +1,128 @@
+  div.container{
+  /*height: 100%;*/
+  overflow: hidden;
+  }
+
+  div.ibox{
+  width: 800px;
+  margin: 0 auto;
+  }
+
+  div.box{
+  width: 860px;
+  margin: 0 auto;
+  border-radius: 2px;
+  background: #ffffff;
+  box-shadow: 2px 2px 5px #999999;
+  }
+  div.text{
+  width: 740px;
+  margin: 0 auto;
+  font-family: 'Roboto', sans-serif;
+  /*background: #e8a6fe;*/
+  }
+
+  div.bottom{
+  /*display:inline-block*/
+  width: 600px;
+  margin: 0 auto;
+  overflow: auto;
+  vertical-align:middle
+  }
+  div.progress{
+  float: left;
+  width: 60%;
+  vertical-align:middle;
+  margin-top: 7px;
+  margin-bottom: 7px;
+  }
+  div.progress-bar{
+  vertical-align:middle;
+  }
+  div.next{
+  float: right;
+  }
+
+  div.viz {
+  position: relative;
+  float: none; /* not needed, just for clarification */
+  /*background: #000000;*/
+  /* the next props are meant to keep this block independent from the other floated one */
+  /*width: auto;*/
+  margin: 0 auto;
+  /*height: 100%;*/
+  overflow: hidden;
+  }​​
+
+
+  .node circle {
+  fill: steelblue;
+  stroke: steelblue;
+  stroke-width: 2px;
+  }
+  .node text { font: 12px sans-serif; }
+  .link {
+  fill: none;
+  stroke: #ccc;
+  stroke-width: 2px;
+  }
+  .additionalParentLink {
+  fill: none;
+  stroke: blue;
+  stroke-width: 1.5px;
+  }
+
+  div.tooltip {
+  position: absolute;
+  text-align: center;
+  width: 60px;
+  height: 16px;
+  padding: 4px;
+  font: 12px sans-serif;
+  background: lightsteelblue;
+  border: 0px;
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 50;
+  }
+
+  div.setData {
+  position: absolute;
+  text-align: left;
+  width: 180px;
+  height: 70px;
+  padding: 4px;
+  font: 12px sans-serif;
+  background: lightsteelblue;
+  border: 0px;
+  border-radius: 8px;
+  z-index: 100;
+  }
+
+  div.setTrust {
+  position: absolute;
+  text-align: left;
+  width: 160px;
+  padding: 4px;
+  font: 12px sans-serif;
+  background: lightsteelblue;
+  border: 0px;
+  border-radius: 8px;
+  }
+
+
+.svg-container {
+    display: inline-block;
+    position: relative;
+    /*width: 100%;*/
+    height: 800px;
+    /*padding-bottom: 100%; /* aspect ratio */
+    vertical-align: top;
+    overflow: hidden;
+}
+.svg-content-responsive {
+    display: inline-block;
+    position: absolute;
+    top: 10px;
+    left: 0;
+}
