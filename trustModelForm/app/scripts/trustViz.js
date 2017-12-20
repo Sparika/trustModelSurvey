@@ -20,10 +20,13 @@ var minEntropy = {
     'logarithmGrp' : 2048,
     'ec' : 200,
     'hash' : 200,
-    'pwd' : 20
+    'pwd' : 20,
+		'trust': 1
 }
 // Reference to model
 var root, model, trust
+
+var trustMap = {}
 
 //Update if blue and set to red
 var blue = 1
@@ -126,22 +129,26 @@ function initTrustPanel(){
         .style('position', 'relative')
         .style('bottom', '0px')
         .style('left', '5px')
-        .style('width', '100px')
-        .text('Trust in actors:')
+        .style('width', '120px')
+        .text('Trust relations:')
     var size = 1
 
     // ADD TRUST INPUT
-    for (var trustee in trust) {
-        addTrustInput(trustee, trust[trustee])
+    for (var i in trust) {
+				var tr = trust[i]
+				if(trustMap[tr.X] == undefined)
+					trustMap[tr.X] = {}
+				trustMap[tr.X][tr.Y] = tr.val
+				addTrustInput(tr, tr.val)
         size ++
-    }
+		}
     // SET SIZE
     divTrust.style('height', 25*size+'px')
     // SET POSITION
     divTrust.style('opacity', 1)
 }
 
-function addTrustInput(trustee, value) {
+function addTrustInput(tr, value) {
     var divTrustLine = divTrust.append('div')
     divTrustLine.append('label')
         .style('display', 'inline-block')
@@ -150,10 +157,10 @@ function addTrustInput(trustee, value) {
         .style('bottom', '0px')
         .style('margin-bottom', '0px')
         .style('left', '5px')
-        .style('width', '25px')
-        .text(trustee+': ')
+        .style('width', '80px')
+        .text(tr.X+' -> '+tr.Y+': ')
     var trustValue = divTrustLine.append('label')
-        .attr('id', 'setTrust-value-'+trustee)
+        .attr('id', 'setTrust-value-'+tr.X+'-'+tr.Y)
         .style('display', 'inline-block')
         .style('text-align', 'center')
         .style('position', 'relative')
@@ -163,13 +170,13 @@ function addTrustInput(trustee, value) {
         .style('width', '25px')
         .append('span')
         .text(value)
-        .attr('for', 'setTrust-'+trustee)
+        .attr('for', 'setTrust-'+tr.X+'-'+tr.Y)
     var trustInput = divTrustLine.append('input')
-        .attr('id', trustee)
+        .attr('id', tr.X+'-'+tr.Y)
         .attr('type', 'range')
         .attr('min', '0')
-        .attr('max', '10')
-        .attr('value', value*10)
+        .attr('max', '100')
+        .attr('value', value*100)
         .style('display', 'inline-block')
         .style('width', '80px')
         .style('text-align', 'right')
@@ -177,8 +184,7 @@ function addTrustInput(trustee, value) {
         .style('bottom', '-5px')
 
     trustInput.on('input', function(){
-      var update = {}
-      update[trustee] = this.value/10
+      var update = [{"X":tr.X, "Y":tr.Y, "val":this.value/100}]
       setActorTrust(update, false)
     })
 }
@@ -294,7 +300,6 @@ function update(source) {
 				.property('value', d.bits)
 				.property('max', minEntropy[d.type]*2 > d.bits ? minEntropy[d.type]*2 : d.bits)
 				.property('nodename', d.name)
-			console.log(d)
 			d3.select('#setEntropy-value')
 				.text(d.bits+' bits')
 		}
@@ -395,23 +400,46 @@ function update(source) {
 
 // COMPONENT NODE TITLE
   nodeEnter
-    .filter(function(d){ return (d.op !== undefined)})
+    .filter(function(d){ return (d.op != undefined)})
     // NAME LABEL
     .append('text')
 	  .attr('id', 'node-name')
-	  .attr('x', 0)
-	  .attr('dy', 5)
-	  .attr('text-anchor', 'middle')
+	  .attr('x', 30)
+	  .attr('dy', -10)
+	  .attr('text-anchor', 'left')
 	  .text(function(d) {
-        var text = d.altname || d.name
-        if(d.op !== undefined)
-          return text
-        if (d.X !== undefined) {
-          text += '('+d.X+','+d.Y+')'
-        }
-        return text
-      })
+        return d.altname || d.name
+		})
 	  .style('fill-opacity', 1)
+	nodeEnter
+		.filter(function(d){ return (d.op != undefined && d.X != undefined)})
+		// Trust LABEL
+	  .append('text')
+	  .attr('id', 'trust-label')
+	  .attr('x', 40 )
+	  .attr('dy', 5 )
+	  .attr('text-anchor', 'left')
+	  .text(function(d) {
+			return d.X+' -> '+d.Y
+	  })
+	  .style('fill-opacity', 1)
+	nodeEnter
+	  .filter(function(d){ return (d.op != undefined)})
+	   // Value LABEL
+	  .append('text')
+	  .attr('id', 'wvalue-label')
+	  .attr('x', 40)
+	  .attr('dy', function(d){
+			if(d.X != undefined) return 20
+			else return 5
+		})
+	  .attr('text-anchor', 'left')
+	  .text(function(d) {
+	       return 't= '+ (d.w_value != undefined ? d.w_value : d.value).toFixed(2)
+	     })
+	  .style('fill-opacity', 1)
+
+
 
 // REQUIREMENT NODE TITLE
   nodeEnter
@@ -423,49 +451,58 @@ function update(source) {
 	  .attr('dy', 0 )
 	  .attr('text-anchor', 'left')
 	  .text(function(d) {
-        var text = d.altname || d.name
-        if(d.op !== undefined)
-          return text
-        if (d.X !== undefined) {
-          text += '('+d.X+','+d.Y+')'
-        }
-        return text
-      })
+        return d.altname || d.name
+    })
 	  .style('fill-opacity', 1)
-  nodeEnter
-    .filter(function(d){ return (d.op == undefined)})
-    // NAME LABEL
-    .append('text')
-	  .attr('id', 'value-label')
+	nodeEnter
+		.filter(function(d){ return (d.op == undefined && d.X != undefined)})
+		// Trust LABEL
+	  .append('text')
+	  .attr('id', 'trust-label')
 	  .attr('x', 25 )
 	  .attr('dy', 15 )
 	  .attr('text-anchor', 'left')
 	  .text(function(d) {
-        return 't= '+d.value.toFixed(2)
-      })
+			return d.X+' -> '+d.Y
+	  })
 	  .style('fill-opacity', 1)
-  nodeEnter
-    .filter(function(d){ return (d.op == undefined)})
-    // NAME LABEL
-    .append('text')
+	nodeEnter
+	  .filter(function(d){ return (d.op == undefined)})
+	   // Value LABEL
+	  .append('text')
 	  .attr('id', 'wvalue-label')
-	  .attr('x', 25 )
-	  .attr('dy', 30 )
+	  .attr('x', 25)
+	  .attr('dy', function(d){
+			if(d.X != undefined) return 30
+			else return 15
+		})
 	  .attr('text-anchor', 'left')
 	  .text(function(d) {
-        return 'wt= '+ (d.w_value != undefined ? d.w_value : d.value).toFixed(2)
-      })
+	       return 't= '+ (d.w_value != undefined ? d.w_value : d.value).toFixed(2)
+	  })
 	  .style('fill-opacity', 1)
+  // nodeEnter
+  //   .filter(function(d){ return (d.op == undefined)})
+  //   // NAME LABEL
+  //   .append('text')
+	//   .attr('id', 'value-label')
+	//   .attr('x', 25 )
+	//   .attr('dy', 15 )
+	//   .attr('text-anchor', 'left')
+	//   .text(function(d) {
+  //       return 't= '+d.value.toFixed(2)
+  //     })
+	//   .style('fill-opacity', 1)
 
 
   // UPDATE
-  node.selectAll('#value-label')
-	  .text(function(d) {
-        return 't= '+d.value.toFixed(2)
-      })
+  // node.selectAll('#value-label')
+	//   .text(function(d) {
+  //       return 't= '+d.value.toFixed(2)
+  //     })
   node.selectAll('#wvalue-label')
 	  .text(function(d) {
-        return 'wt= '+ (d.w_value != undefined ? d.w_value : d.value).toFixed(2)
+        return 't= '+ (d.w_value != undefined ? d.w_value : d.value).toFixed(2)
       })
 
   // Declare the links�
@@ -484,7 +521,8 @@ function computeAllWeightedTrust(node) {
     // Explore children but not aux
     if (node.children) node.children.forEach(computeAllWeightedTrust)
     // Compute for this if it's a requirement
-    if (!node.op) node.w_value = computeWeightedTrust(node, new Set())
+    //if (!node.op)
+			node.w_value = computeWeightedTrust(node, new Set())
 }
 
 function computeWeightedTrust(node, actorSet) {
@@ -492,9 +530,9 @@ function computeWeightedTrust(node, actorSet) {
     // IF NODE IS LEAF RETURN VALUE WITH WEIGHT
 	if(node.children == undefined && node.aux_children == undefined){
         nodeTrust = node.value
-        actorSet.forEach(function(actor, index, array){
-            nodeTrust = nodeTrust * trust[actor]
-        })
+        // actorSet.forEach(function(actor, index, array){
+        //     nodeTrust = nodeTrust * trust[actor]
+        // })
 	} else {
         switch (node.op) {
             case 'MIN':
@@ -518,8 +556,15 @@ function computeWeightedTrust(node, actorSet) {
             break;
         }
     }
-    return nodeTrust
-}root
+		if(node.X){
+			if(node.X == "A" && node.Y == "CSA"){
+				console.log(trustMap[node.X][node.Y])
+			}
+			return nodeTrust * trustMap[node.X][node.Y]
+		}
+		else
+			return nodeTrust
+}
 
 function MINTrust(parent, actorSet) {
     var nodeTrust = 1
@@ -588,7 +633,7 @@ function updateTrust(node, updates){
 				node.aux_children.forEach(MIN, {'parent': node, 'updates': updates})
 		break;
 		case 'SUM':
-        case 'AVG':
+    case 'AVG':
 			node.value = 0
             var num = 0
             if (node.children) {
@@ -598,9 +643,9 @@ function updateTrust(node, updates){
 				node.aux_children.forEach(SUM, {'parent': node, 'updates': updates})
 				num += node.aux_children.length
 			}
-            //Normalization max at 1
-            if (node.op == 'AVG') node.value = node.value/num
-            if(node.value > 1) node.value = 1
+      //Normalization max at 1
+      if (node.op == 'AVG') node.value = node.value/num
+      if(node.value > 1) node.value = 1
 		break;
 		default:
 			DEFAULTOP(node, updates)
@@ -621,10 +666,10 @@ function MIN(child, index, array){
 function DEFAULTOP(parent, updates){
 	// TEST IF ONLY ONE CHILD
 	if(parent.aux_children == undefined && parent.children.length == 1){
-        updateTrust(parent.children[0], updates)
+    updateTrust(parent.children[0], updates)
 		parent.value = parent.children[0].value
 	} else if(parent.children == undefined && parent.aux_children.length == 1){
-        updateTrust(parent.aux_children[0], updates)
+    updateTrust(parent.aux_children[0], updates)
 		parent.value = parent.aux_children[0].value
 	} else {
 		alert('Error: no operator set for node '+parent.name+'\n '+ parent)
@@ -696,8 +741,8 @@ function normNodeValue(node, update) {
 function setNodeColor(d) {
   if (d.children == undefined)
     return d3.rgb(50,50,50)
-  else if(d.op !== undefined)
-    return d3.rgb(175,175,175)
+//  else if(d.op !== undefined)
+//    return d3.rgb(175,175,175)
   else{
     var xr = d.w_value < 0.5 ? 1 : 2-d.w_value/0.5
     var xg = d.w_value < 0.5 ? (d.w_value-0.5)/0.5 : 1
@@ -734,13 +779,14 @@ function setEntropy(entropyUpdates){
     //Reverse blue (nodes are not on updtated status anymore)
     blue = blue==0? 1:0
 }
-function setActorTrust(trustUpdates, externalInput){
-    for(var actor in trustUpdates){
-      trust[actor] = trustUpdates[actor]
-      divTrust.select('#setTrust-value-'+actor).text(trustUpdates[actor])
-      if(externalInput)
-        divTrust.select('#'+actor).property('value', trustUpdates[actor]*10)
-    }
-    computeAllWeightedTrust(root)
-    update(root)
+function setActorTrust(maj, externalInput){
+	for(var i in maj){
+		var tr = maj[i]
+    trustMap[tr.X][tr.Y] = tr.val
+    divTrust.select('#setTrust-value-'+tr.X+'-'+tr.Y).text(tr.val)
+    if(externalInput)
+      divTrust.select('#'+tr.X+'-'+tr.Y).property('value', tr.val*10)
+	}
+  computeAllWeightedTrust(root)
+  update(root)
 }

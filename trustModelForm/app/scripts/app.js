@@ -33,8 +33,8 @@ angular
                 controller  : 'MainCtrl',
                 activeTab: 'survey'
             })
-            .otherwise({ redirectTo: function() {window.location = '/0'} });
+            .otherwise({ redirectTo: function() {window.location = '#0'} });
 
 
-        $locationProvider.html5Mode(true)
+        //$locationProvider.html5Mode(true)
   })
