@@ -26,7 +26,7 @@ angular.module('trustModelFormApp')
       function loadModel(){
         if(self.fetch) {
             // run my fetch request here
-            fetch('../models/'+urlJson)
+            fetch('./models/'+urlJson)
             .then(response => response.json())
             .then(json => reloadTrustModel(json, width, height))
         } else {

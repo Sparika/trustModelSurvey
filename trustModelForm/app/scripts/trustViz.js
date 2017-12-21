@@ -342,23 +342,57 @@ function update(source) {
 		  else return '#000000'
 	  })
 
-  //MIN
-  nodeEnter.append('line')
-	  .attr('id', 'op-symbol')
-	      .filter(function(d){ return d.op === 'MIN' })
-	      .attr('x1', - rOperator/2)
-	      .attr('y1', 0)
-	      .attr('x2', + rOperator/2)
-	      .attr('y2', 0)
-	  .style('fill', function(d){
-		  if(d.children == undefined) return '#FFFFFF'
-		  else return '#FFFFFF'
-	  })
-	  .style('stroke-width', '2px')
-	  .style('stroke', function(d){
-		  if(d.children == undefined) return '#000000'
-		  else return '#000000'
-	  })
+		//MIN
+	  nodeEnter.append('line')
+		  .attr('id', 'op-symbol')
+		      .filter(function(d){ return d.op === 'MIN' })
+		      .attr('x1', - rOperator/2)
+		      .attr('y1', 0)
+		      .attr('x2', + rOperator/2)
+		      .attr('y2', 0)
+		  .style('fill', function(d){
+			  if(d.children == undefined) return '#FFFFFF'
+			  else return '#FFFFFF'
+		  })
+		  .style('stroke-width', '2px')
+		  .style('stroke', function(d){
+			  if(d.children == undefined) return '#000000'
+			  else return '#000000'
+		  })
+			//MAX 1/2
+			nodeEnter.append('line')
+			  .attr('id', 'op-symbol')
+			      .filter(function(d){ return d.op === 'MAX' })
+			      .attr('x1', -trans)
+			      .attr('y1', trans)
+			      .attr('x2', trans)
+			      .attr('y2', -trans)
+			  .style('fill', function(d){
+				  if(d.children == undefined) return '#FFFFFF'
+				  else return '#FFFFFF'
+			  })
+			  .style('stroke-width', '2px')
+			  .style('stroke', function(d){
+				  if(d.children == undefined) return '#000000'
+				  else return '#000000'
+			  })
+				// MAX 2/2
+				nodeEnter.append('line')
+					.attr('id', 'op-symbol')
+							.filter(function(d){ return d.op === 'MAX' })
+							.attr('x1', trans)
+							.attr('y1', trans)
+							.attr('x2', -trans)
+							.attr('y2', -trans)
+					.style('fill', function(d){
+						if(d.children == undefined) return '#FFFFFF'
+						else return '#FFFFFF'
+					})
+					.style('stroke-width', '2px')
+					.style('stroke', function(d){
+						if(d.children == undefined) return '#000000'
+						else return '#000000'
+					})
   //SUM 1/2
   nodeEnter.append('line')
 	  .attr('id', 'op-symbol')
@@ -538,6 +572,9 @@ function computeWeightedTrust(node, actorSet) {
             case 'MIN':
                 nodeTrust = MINTrust(node, actorSet)
             break;
+		        case 'MAX':
+		        	nodeTrust = MAXTrust(node, actorSet)
+		        break;
             case 'SUM':
             case 'AVG':
                 var num = 0
@@ -577,6 +614,21 @@ function MINTrust(parent, actorSet) {
         parent.aux_children.forEach(function(child, index, array){
             var t = computeWeightedTrust(child, actorSet)
             if (t<nodeTrust) nodeTrust = t
+        })
+	}
+    return nodeTrust
+}
+function MAXTrust(parent, actorSet) {
+    var nodeTrust = 0
+    if (parent.children) {
+        parent.children.forEach(function(child, index, array){
+            var t = computeWeightedTrust(child, actorSet)
+            if (t>nodeTrust) nodeTrust = t
+        })
+    } if(parent.aux_children){
+        parent.aux_children.forEach(function(child, index, array){
+            var t = computeWeightedTrust(child, actorSet)
+            if (t>nodeTrust) nodeTrust = t
         })
 	}
     return nodeTrust
@@ -632,6 +684,13 @@ function updateTrust(node, updates){
 			if(node.aux_children)
 				node.aux_children.forEach(MIN, {'parent': node, 'updates': updates})
 		break;
+		case 'MAX':
+			node.value = 0
+			node.children.forEach(MAX, {'parent': node, 'updates': updates})
+			if(node.aux_children)
+				node.aux_children.forEach(MAX, {'parent': node, 'updates': updates})
+		break;
+		break;
 		case 'SUM':
     case 'AVG':
 			node.value = 0
@@ -661,6 +720,11 @@ function SUM(child, index, array){
 function MIN(child, index, array){
 	updateTrust(child, this.updates)
 	if (this.parent.value > child.value)
+		this.parent.value = child.value
+}
+function MAX(child, index, array){
+	updateTrust(child, this.updates)
+	if (this.parent.value < child.value)
 		this.parent.value = child.value
 }
 function DEFAULTOP(parent, updates){
